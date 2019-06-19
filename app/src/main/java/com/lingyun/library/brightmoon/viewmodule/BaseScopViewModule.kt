@@ -58,13 +58,25 @@ class BaseScopViewModule(coroutineScope: CoroutineScope) :
             channel.send("start")
 
             try {
-                RetrofitManager.getService(PositionService::class.java)
+                val result = RetrofitManager.getService(PositionService::class.java)
                     .updatePosition(position).await()
+
+                channel.send("finish upload to bgend")
             } catch (e: Exception) {
+                when (e) {
+                    is CancellationException -> {
+                        throw e
+                    }
+                    else -> {
+                        Timber.e("upload by http exception")
+                    }
+                }
                 Timber.e(e)
             } finally {
-                channel.offer("finish")
-                channel.close()
+                withContext(NonCancellable){
+                    channel.send("finish")
+                    channel.close()
+                }
             }
 
         }
@@ -72,20 +84,26 @@ class BaseScopViewModule(coroutineScope: CoroutineScope) :
         return channel
     }
 
-    fun uoloadPostionWithExceptionHandler(position: Position):Channel<String>{
+    /**
+     * deperated
+     */
+    @Deprecated("coroutines await not use execption handler")
+     fun uploadPostionWithExceptionHandler(position: Position): Channel<String> {
 
+        val channel = Channel<String>()
         val handler = CoroutineExceptionHandler { _, exception ->
+            //nerver to here
             Timber.e(exception)
         }
 
-        val channel = Channel<String>()
-        launch (handler){
+        launch(handler) {
             channel.send("start")
             try {
-                RetrofitManager.getService(PositionService::class.java)
+                val result = RetrofitManager.getService(PositionService::class.java)
                     .updatePosition(position).await()
+                channel.send("finish upload to bgend")
             } finally {
-                withContext(NonCancellable){
+                withContext(NonCancellable) {
                     channel.send("finish")
                     channel.close()
                 }
