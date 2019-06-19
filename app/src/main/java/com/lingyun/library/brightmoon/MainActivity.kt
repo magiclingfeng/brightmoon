@@ -8,6 +8,7 @@ import com.lingyun.library.brightmoon.service.PositionService
 import com.lingyun.library.brightmoon.viewmodule.BaseScopViewModule
 import kotlinx.coroutines.*
 import timber.log.Timber
+import java.io.IOException
 
 class MainActivity : AppCompatActivity(), CoroutineScope by CoroutineScope(Dispatchers.Main) {
 
@@ -115,6 +116,29 @@ class MainActivity : AppCompatActivity(), CoroutineScope by CoroutineScope(Dispa
             }
 
         }
+    }
+
+    fun handleExecption(){
+
+        val handler = CoroutineExceptionHandler { _, exception ->
+            println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
+        }
+
+        val job = GlobalScope.launch(handler) {
+            launch {
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    throw ArithmeticException()
+                }
+            }
+            launch {
+                delay(100)
+                throw IOException()
+            }
+            delay(Long.MAX_VALUE)
+        }
+
     }
 
 

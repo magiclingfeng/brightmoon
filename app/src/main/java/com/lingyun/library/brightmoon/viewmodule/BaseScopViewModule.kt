@@ -72,6 +72,29 @@ class BaseScopViewModule(coroutineScope: CoroutineScope) :
         return channel
     }
 
+    fun uoloadPostionWithExceptionHandler(position: Position):Channel<String>{
+
+        val handler = CoroutineExceptionHandler { _, exception ->
+            Timber.e(exception)
+        }
+
+        val channel = Channel<String>()
+        launch (handler){
+            channel.send("start")
+            try {
+                RetrofitManager.getService(PositionService::class.java)
+                    .updatePosition(position).await()
+            } finally {
+                withContext(NonCancellable){
+                    channel.send("finish")
+                    channel.close()
+                }
+            }
+        }
+
+        return channel
+    }
+
     fun onDestroy() {
         Timber.d("onDestroy")
 
