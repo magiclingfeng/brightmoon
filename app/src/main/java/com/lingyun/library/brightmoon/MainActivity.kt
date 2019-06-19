@@ -11,7 +11,7 @@ import timber.log.Timber
 
 class MainActivity : AppCompatActivity(), CoroutineScope by CoroutineScope(Dispatchers.Main) {
 
-    lateinit var  viewModule :BaseScopViewModule
+    lateinit var viewModule: BaseScopViewModule
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.i("onCreate")
@@ -101,21 +101,28 @@ class MainActivity : AppCompatActivity(), CoroutineScope by CoroutineScope(Dispa
                 }
 
             } catch (e: Exception) {
-                Timber.d("upload failed")
+                when (e) {
+                    is CancellationException -> {
+                        //scop is cancel
+                        Timber.d("upload failed because by scop cancel")
+                        throw  e
+                    }
+                    else -> {
+                        Timber.d("upload failed because by http exection")
+                    }
+                }
                 Timber.e(e)
             }
-
 
         }
     }
 
 
-    fun loadByViewModule(){
+    fun loadByViewModule() {
         val channel = viewModule.loadPosition()
 
-
         launch {
-            for (value in channel){
+            for (value in channel) {
                 Timber.e("load progress:${value}")
             }
         }

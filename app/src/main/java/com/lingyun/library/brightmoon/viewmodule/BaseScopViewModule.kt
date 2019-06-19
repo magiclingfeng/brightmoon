@@ -4,11 +4,8 @@ import com.lingyun.library.brightmoon.AppConfig
 import com.lingyun.library.brightmoon.database.entity.Position
 import com.lingyun.library.brightmoon.retrofit.RetrofitManager
 import com.lingyun.library.brightmoon.service.PositionService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
@@ -33,7 +30,7 @@ class BaseScopViewModule(coroutineScope: CoroutineScope) :
     CoroutineScope by CoroutineScope(coroutineScope.coroutineContext + Dispatchers.IO) {
 
 
-    fun onCreate(){
+    fun onCreate() {
         Timber.e("onCreate")
     }
 
@@ -45,7 +42,10 @@ class BaseScopViewModule(coroutineScope: CoroutineScope) :
             try {
                 AppConfig.appDatabase.positionDao().listPositions(0, 100)
             } finally {
-                channel.send("finish")
+                withContext(NonCancellable) {
+                    channel.send("finish")
+                    channel.close()
+                }
             }
         }
 
@@ -64,6 +64,7 @@ class BaseScopViewModule(coroutineScope: CoroutineScope) :
                 Timber.e(e)
             } finally {
                 channel.offer("finish")
+                channel.close()
             }
 
         }
